@@ -1,0 +1,25 @@
+FROM python:3.13-slim-trixie
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml uv.lock* ./
+RUN mkdir /app/src
+COPY . /app/src
+
+RUN uv sync --frozen --all-extras
+RUN chmod +x /app/src/entrypoint.sh
+
+ENV PYTHONPATH=/app
+
+EXPOSE 8000
+ENTRYPOINT ["uv", "run", "bash", "/app/src/entrypoint.sh"]
+
+WORKDIR /app/src
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

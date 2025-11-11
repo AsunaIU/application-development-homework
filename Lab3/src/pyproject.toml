@@ -1,0 +1,13 @@
+[project]
+name = "lab3"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "asyncpg>=0.30.0",
+    "litestar[standard]>=2.18.0",
+    "pydantic[email]>=2.12.4",
+    "sqlalchemy[asyncio]>=2.0.44",
+    "uvicorn[standard]>=0.38.0",
+]
