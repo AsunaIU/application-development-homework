@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: superpass
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - db_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: superpass
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - db_network
+
+  app:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:superpass@db:5432/db
+      PYTHONPATH: /app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db_network
+    
+volumes:
+  postgres_data:
+networks:
+  db_network:
