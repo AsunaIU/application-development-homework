@@ -1,0 +1,28 @@
+fail_fast: false
+
+repos:
+  - repo: local
+    hooks:
+      - id: lab5-black
+        name: Lab5 - Black
+        entry: python -m black
+        args: [Lab5/src]
+        pass_filenames: false
+        language: system
+        always_run: true
+
+      - id: lab5-isort
+        name: Lab5 - isort
+        entry: python -m isort
+        args: [Lab5/src]
+        pass_filenames: false
+        language: system
+        always_run: true
+
+      - id: lab5-pylint
+        name: Lab5 - Pylint
+        entry: python -m pylint
+        args: [Lab5/src]
+        pass_filenames: false
+        language: system
+        always_run: true

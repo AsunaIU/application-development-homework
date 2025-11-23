@@ -1,0 +1,74 @@
+[MASTER]
+# Add the root directory to Python path for imports
+init-hook='import sys; import os; sys.path.insert(0, os.path.dirname(os.path.abspath(".")));'
+
+# Ignore paths
+ignore-paths=
+    ^deploy/.*$,
+    ^temp/.*$,
+    ^build/.*$,
+    ^tests/.*$,
+    ^.*/alembic/.*$
+
+[MESSAGES CONTROL]
+# Disable specific checks that are acceptable for this project
+disable=
+    missing-function-docstring,
+    missing-module-docstring,
+    missing-class-docstring,
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-positional-arguments,
+    too-many-instance-attributes,
+    import-outside-toplevel,
+    duplicate-code,
+    redefined-outer-name,
+    unused-argument,
+    broad-exception-caught
+
+[TYPECHECK]
+# SQLAlchemy and Pydantic use metaclass magic that Pylint doesn't understand
+generated-members=
+    func.now,
+    func.count,
+    func.*,
+    select.*,
+    insert.*,
+    update.*,
+    delete.*,
+    sqlalchemy.*
+
+extension-pkg-whitelist=
+    pydantic,
+    orjson,
+    sqlalchemy
+
+# Ignore "not callable" errors for SQLAlchemy func
+ignored-classes=
+    sqlalchemy.sql.functions.func,
+    sqlalchemy.orm.scoping.scoped_session
+
+[DESIGN]
+# Reduce minimum public methods requirement for data models
+min-public-methods=0
+max-attributes=10
+max-args=8
+
+[FORMAT]
+# Match Black's formatting
+max-line-length=88
+
+[BASIC]
+# Naming conventions
+good-names=
+    i,j,k,
+    ex,
+    _,
+    id,
+    db,
+    app,
+    e
+
+[SIMILARITIES]
+# Minimum lines of similar code to report
+min-similarity-lines=10
