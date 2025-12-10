@@ -26,3 +26,27 @@ repos:
         pass_filenames: false
         language: system
         always_run: true
+      
+      - id: lab6-black
+        name: Lab6 - Black
+        entry: python -m black
+        args: [Lab6/src]
+        pass_filenames: false
+        language: system
+        always_run: true
+
+      - id: lab6-isort
+        name: Lab6 - isort
+        entry: python -m isort
+        args: [Lab6/src]
+        pass_filenames: false
+        language: system
+        always_run: true
+
+      - id: lab6-pylint
+        name: Lab6 - Pylint
+        entry: python -m pylint
+        args: [Lab6/src]
+        pass_filenames: false
+        language: system
+        always_run: true
