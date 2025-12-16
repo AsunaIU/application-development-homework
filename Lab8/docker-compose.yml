@@ -1,0 +1,148 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+      
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: superpass
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - app_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: superpass
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+        
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_VHOST=/
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app_network
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 30s
+      
+  app:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:superpass@db:5432/db
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      PYTHONPATH: /app
+      START_TASKIQ_WORKER: 0
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+  
+  taskiq-worker:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    command: ["/bin/sh", "-c", "sleep 30 && uv run taskiq worker src.messaging.taskiq_broker:taskiq_broker src.messaging.tasks.report"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:superpass@db:5432/db
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      PYTHONPATH: /app
+      SKIP_MIGRATIONS: "1"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    restart: unless-stopped
+  
+  taskiq-scheduler:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    command: ["/bin/sh", "-c", "sleep 30 && uv run python -m taskiq scheduler src.messaging.taskiq_broker:scheduler src.messaging.tasks.report"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:superpass@db:5432/db
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      PYTHONPATH: /app
+      SKIP_MIGRATIONS: "1"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    restart: unless-stopped
+    
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis-data:
+  
+networks:
+  app_network:
