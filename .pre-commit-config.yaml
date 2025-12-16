@@ -50,3 +50,27 @@ repos:
         pass_filenames: false
         language: system
         always_run: true
+      
+      - id: lab7-black
+        name: Lab7 - Black
+        entry: python -m black
+        args: [Lab7/src]
+        pass_filenames: false
+        language: system
+        always_run: true
+
+      - id: lab7-isort
+        name: Lab7 - isort
+        entry: python -m isort
+        args: [Lab7/src]
+        pass_filenames: false
+        language: system
+        always_run: true
+
+      - id: lab7-pylint
+        name: Lab7 - Pylint
+        entry: python -m pylint
+        args: [Lab7/src]
+        pass_filenames: false
+        language: system
+        always_run: true
